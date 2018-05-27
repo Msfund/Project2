@@ -1,0 +1,56 @@
+1、本策略属于多品种单因子组合，不应该说只是属于组合仓位管理
+（1）backtrader可以接受多个数据集合（pandas）的输入,并将它们
+作为多个datafeed，形成多个datalines，可以通过self.datas[index]
+引用。但是由于只能通过指标引用，所以需要构建指标和代码之间的
+映射。
+（2）初试设置，加载策略，运行策略
+
+2、运行策略
+（1）order和trader对象的初试设置和判断(了解订单和trade怎么对象
+内核）
+（2）在next(),也就是下一个bar传进来的时间点进行相关的组合判断
+和检查，再之后就是下单问题
+
+
+
+3、order 和 trade相关参数
+（1）order
+  状态：
+Created ：被创造 
+Submitted：被提交到broker那儿 
+Accepted：被接受，但是还在等待执行 
+Partial：被部分执行
+（前四种都是订单处于alive状态）
+Completed：完全执行
+Canceled ：取消
+Expired'：到期
+Margin'：保证金不足
+Rejected：被拒绝
+   类型：
+1、市价
+2、限价
+3、停止单
+4、移动止损单（trailing stop order）
+   
+   方法：
+isbuy():判断是买入？
+issell():判断是卖出？
+isalive（）：判断是否accepted或者partial
+    创造的类型：
+1、买入开仓
+2、卖出开仓
+3、平仓（close，这个是默认按照市价来平仓的）
+   
+	（2）trade
+	trade 记录的是已经完成的order，trade主要用于计算结果所用的    
+	状态：close(使得交易的self.size为0),created,open（指的是self.size!=0）
+	记录信息：
+	baropen:记录在哪个bar上开仓，dtopen是哪个时间点
+	self.barlen: 记录目前距离开仓（最新的trade）已经过去了多少bar,注意这里
+		      baropen必须是由0到非0，也就是self.barlen能够记录未平仓的
+		      时间。
+	self.isclose:为bool形，由非0到0才为真
+  	self.isopen:只要size不为0那么均为真
+	self.pnl：记录一个品种所有交易的损益情况
+	
+
