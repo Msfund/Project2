@@ -1,5 +1,7 @@
 # encoding: utf-8
-# the file used to test the single factor using the multiple vtsymbol
+
+# 横截面动量因子测试
+# 参考海通证券《CTA因子化投资与组合构建》p13
 
 
 
@@ -89,8 +91,8 @@ class Mmt_Strategy(bt.Strategy):
             for i, vt in self.index_mapping_vt.items():
                 clock_data = self.datas[self.vt_mapping_index[vt]]
                 
-                self.Mmt_ind[vt] = Momentum_ind(window_prd = self.params.Mmt_window_prd,
-                                           datafeed= [self.datas[i]] + [clock_data])                
+                self.Mmt_ind[vt] = Momentum_ind(params = {'window_prd':self.params.Mmt_window_prd},
+                                           datafeed = [self.datas[i]] , clockdata = clock_data)                
                 self.Mmt_ind[vt].plotinfo.plot = False
             # 加个计时器：clock,然后利用计时器来提取指标
             self.clock = 0
@@ -109,112 +111,112 @@ class Mmt_Strategy(bt.Strategy):
             # 加个计时器：clock,然后利用计时器来提取指标
             self.clock = self.params.rollover_window_prd - 1    
 
-    #def start(self):
-        #print('the strategy begin')
+    def start(self):
+        print('the strategy begin')
 
-    #def prenext(self):
-        #print('I am not ready, need %s days'%self.params.skn_window_prd)
+    def prenext(self):
+        print('I am not ready, need %s days'%self.params.Mmt_window_prd)
 
-    #def notify_order(self, order):
-        #if order.status in [order.Submitted, order.Accepted]:
-            ## Buy/Sell order submitted/accepted to/by broker - Nothing to do
-            #return
+    def notify_order(self, order):
+        if order.status in [order.Submitted, order.Accepted]:
+            # Buy/Sell order submitted/accepted to/by broker - Nothing to do
+            return
 
-        ## Check if an order has been completed
-        ## Attention: broker could reject order if not enough cash
-        #if order.status in [order.Completed]:
-            #if order.isbuy():
-                #self.log(
-                    #'vtsymbole: %s BUY EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
-                    #(order.data._name, 
-                     #order.executed.price,
-                     #order.executed.value,
-                     #order.executed.comm))
-
-
-            #else:  # Sell
-                #self.log('vtsymbole: %s SELL EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
-                         #(   order.data._name,
-                             #order.executed.price,
-                             #order.executed.value,
-                             #order.executed.comm))
-
-            ## self.excuted_bar_byorder[order.data._name] = len(self)
-            ## self.executed_bar 记录成功交易的order在哪个bar上面交易成功的，为之后退出做准备
-
-        #elif order.status in [order.Canceled, order.Margin, order.Rejected, order.Expired]:
-            #print('----------------------------------------')
-            #print('order.status is %s'%order.status)
-            #self.log('Order Canceled/Margin/Rejected/expired, ordername %s:'%order.data._name) 
-
-            ## 将不成交的合约记录，用于之后平仓
-            #self.no_trad_vt.extend([order.data._name])
+        # Check if an order has been completed
+        # Attention: broker could reject order if not enough cash
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                self.log(
+                    'vtsymbole: %s BUY EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
+                    (order.data._name, 
+                     order.executed.price,
+                     order.executed.value,
+                     order.executed.comm))
 
 
-        ## the order has been completed, set the self.order to none
-        ## self.order = None
+            else:  # Sell
+                self.log('vtsymbole: %s SELL EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
+                         (   order.data._name,
+                             order.executed.price,
+                             order.executed.value,
+                             order.executed.comm))
 
-    #def notify_trade(self, trade):
-        #if not trade.isclosed:
-            #return
+            # self.excuted_bar_byorder[order.data._name] = len(self)
+            # self.executed_bar 记录成功交易的order在哪个bar上面交易成功的，为之后退出做准备
 
-        #self.log('OPERATION PROFIT, GROSS %.2f, NET %.2f' %
-                 #(trade.pnl, trade.pnlcomm))
+        elif order.status in [order.Canceled, order.Margin, order.Rejected, order.Expired]:
+            print('----------------------------------------')
+            print('order.status is %s'%order.status)
+            self.log('Order Canceled/Margin/Rejected/expired, ordername %s:'%order.data._name) 
 
-    #def next(self):
-        ## 记录时间
-        #date = self.datas[0].datetime.date(0)
-
-        ## 输出仓位信息
-        #for i, vt in self.index_mapping_vt.items():
-            #pos = self.positions[self.datas[i]].size
-            #print('vtname: %s position :%s'%(vt, pos))
+            # 将不成交的合约记录，用于之后平仓
+            self.no_trad_vt.extend([order.data._name])
 
 
-        ## 将数据添加到组合仓位管理中
-        ## 更新仓位管理的相关数据
-        #for i , vt in self.index_mapping_vt.items():
-            #self.pos_manage.update_data(vt, self.datas[i].close[0])
-        ## 判断是否为组合换仓日
-        #if self.holding_days == self.params.shift_pos_days:
-            ## 对之前的持仓进行平仓
-            #self.last_trading_vt = [vt for vt in self.pos_manage.new_trading_vt if vt not in self.no_trad_vt]
-            #for vt in self.last_trading_vt:
-                #self.close(data=self.datas[self.vt_mapping_index[vt]])
-                #print('%s close created , the price is %s '%(vt ,self.datas[self.vt_mapping_index[vt]].close[0]))
+        # the order has been completed, set the self.order to none
+        # self.order = None
 
-            ## 寻找买入和卖出合约
-            ## 对指标进行排序，买入前ratio_asset个,卖出后个ratio_asset个,至少买卖一个资产
-            #temp_ind = pd.Series([self.Mmt_ind[vt][self.clock] for vt in self.index_mapping_vt.values()], \
-                                 #index=self.index_mapping_vt.values()).sort_values(ascending = False)
-            #trading_assetnum = max(1, int(self.params.asset_ratio * len(self.vt_mapping_index)))
-            #buy_vt = list(temp_ind.head(trading_assetnum).index)
-            #sell_vt = list(temp_ind.tail(trading_assetnum).index)
-            ## 将买卖合约添加进仓位管理中
-            #self.pos_manage.updata_vtsymbol(buy_vt + sell_vt)
-            ## 计算每个合约买卖的数目
-            #tradingsizer_byvt = self.pos_manage.clct_sizer(cerebro.broker.getvalue())
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
 
-            ## 分别买卖相关合约
-            #for vt in buy_vt:
-                #i = self.vt_mapping_index[vt]
-                #sizer = tradingsizer_byvt[vt]                
-                #lprice = self.datas[i].close[0]+self.od_params[vt]["pricetick"]*(-10)
-                #self.buy(data = self.datas[i] ,exectype = Order.Limit, price = lprice,  size= sizer, \
-                         #valid = self.datas[i].datetime.date(0) + datetime.timedelta(self.od_params[vt]["ordervaliday"]))
-                #print('time :%s buy vt: %s, enter pending price : %s ,size : %s '%(date,vt,lprice,sizer))
-            #for vt in sell_vt:
-                #i = self.vt_mapping_index[vt]
-                #sizer = tradingsizer_byvt[vt]                
-                #lprice = self.datas[i].close[0] - self.od_params[vt]["pricetick"]*(-10)
-                #self.sell(data = self.datas[i] ,exectype = Order.Limit, price = lprice, size= sizer ,\
-                          #valid = self.datas[i].datetime.date(0) + datetime.timedelta(self.od_params[vt]["ordervaliday"]))
-                #print('time :%s sell vt: %s, enter pending price : %s, size: %s'%(date,vt, lprice, sizer))
-            #self.holding_days = 1
-            #self.no_trad_vt = []
-        #if not self.indicator_islive:
-            #self.clock += 1
-        #self.holding_days += 1 
+        self.log('OPERATION PROFIT, GROSS %.2f, NET %.2f' %
+                 (trade.pnl, trade.pnlcomm))
+
+    def next(self):
+        # 记录时间
+        date = self.datas[0].datetime.date(0)
+
+        # 输出仓位信息
+        for i, vt in self.index_mapping_vt.items():
+            pos = self.positions[self.datas[i]].size
+            print('vtname: %s position :%s'%(vt, pos))
+
+
+        # 将数据添加到组合仓位管理中
+        # 更新仓位管理的相关数据
+        for i , vt in self.index_mapping_vt.items():
+            self.pos_manage.update_data(vt, self.datas[i].close[0])
+        # 判断是否为组合换仓日
+        if self.holding_days == self.params.shift_pos_days:
+            # 对之前的持仓进行平仓
+            self.last_trading_vt = [vt for vt in self.pos_manage.new_trading_vt if vt not in self.no_trad_vt]
+            for vt in self.last_trading_vt:
+                self.close(data=self.datas[self.vt_mapping_index[vt]])
+                print('%s close created , the price is %s '%(vt ,self.datas[self.vt_mapping_index[vt]].close[0]))
+
+            # 寻找买入和卖出合约
+            # 对指标进行排序，买入前ratio_asset个,卖出后个ratio_asset个,至少买卖一个资产
+            temp_ind = pd.Series([self.Mmt_ind[vt][self.clock] for vt in self.index_mapping_vt.values()], \
+                                 index=self.index_mapping_vt.values()).sort_values(ascending = False)
+            trading_assetnum = max(1, int(self.params.asset_ratio * len(self.vt_mapping_index)))
+            buy_vt = list(temp_ind.head(trading_assetnum).index)
+            sell_vt = list(temp_ind.tail(trading_assetnum).index)
+            # 将买卖合约添加进仓位管理中
+            self.pos_manage.updata_vtsymbol(buy_vt + sell_vt)
+            # 计算每个合约买卖的数目
+            tradingsizer_byvt = self.pos_manage.clct_sizer(cerebro.broker.getvalue())
+
+            # 分别买卖相关合约
+            for vt in buy_vt:
+                i = self.vt_mapping_index[vt]
+                sizer = tradingsizer_byvt[vt]                
+                lprice = self.datas[i].close[0]+self.od_params[vt]["pricetick"]*(-10)
+                self.buy(data = self.datas[i] ,exectype = Order.Limit, price = lprice,  size= sizer, \
+                         valid = self.datas[i].datetime.date(0) + datetime.timedelta(self.od_params[vt]["ordervaliday"]))
+                print('time :%s buy vt: %s, enter pending price : %s ,size : %s '%(date,vt,lprice,sizer))
+            for vt in sell_vt:
+                i = self.vt_mapping_index[vt]
+                sizer = tradingsizer_byvt[vt]                
+                lprice = self.datas[i].close[0] - self.od_params[vt]["pricetick"]*(-10)
+                self.sell(data = self.datas[i] ,exectype = Order.Limit, price = lprice, size= sizer ,\
+                          valid = self.datas[i].datetime.date(0) + datetime.timedelta(self.od_params[vt]["ordervaliday"]))
+                print('time :%s sell vt: %s, enter pending price : %s, size: %s'%(date,vt, lprice, sizer))
+            self.holding_days = 1
+            self.no_trad_vt = []
+        if not self.indicator_islive:
+            self.clock += 1
+        self.holding_days += 1 
 
 if __name__ == '__main__':  
     # Create a cerebro entity  

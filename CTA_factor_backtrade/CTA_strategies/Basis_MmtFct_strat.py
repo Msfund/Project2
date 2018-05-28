@@ -1,6 +1,7 @@
 # encoding: utf-8
 
-# 基差动量因子测试
+# 基差动量因子多品种测试
+# 参考海通证券《CTA因子化投资与组合构建》p18
 
 
 from __future__ import (absolute_import, division, print_function,
@@ -16,7 +17,7 @@ from backtrader import Order
 # import the strategy indicator and position management method
 from CTA_factor_backtrade.CTA_base import CTA_setting_parse
 from CTA_factor_backtrade.position_manage.Tgtvol_pos import Tgtvol_Position_manag
-from CTA_factor_backtrade.CTA_indicators.Basis_Mmt_ind import Basis_Mmt
+from CTA_factor_backtrade.CTA_indicators.BasisMmt_ind import BasisMmt_ind
 from CTA_factor_backtrade.CTA_strategies.SkewnessFctlist_setting import SETTING
 
 # import the data engine
@@ -26,6 +27,7 @@ from getdata_project.HisDayData import HisDayData
 import pandas as pd
 import numpy as np 
 import re
+
 
 class Basis_MmtStrategy(bt.Strategy):
     params = (('shift_pos_days', 30),('BasisMmt_window_prd',90), ('asset_ratio', 0.2),
@@ -98,7 +100,8 @@ class Basis_MmtStrategy(bt.Strategy):
             # 但是我们不用其进行计算            
             for vt, datalist in datafeeds_vt.items():
                 clock_data = self.datas[self.tradevt_campping_index[vt]]
-                self.BasisMmt_ind[vt] = Basis_Mmt(datafeed = datalist + [clock_data], window_prd= self.params.BasisMmt_window_prd)
+                self.BasisMmt_ind[vt] = BasisMmt_ind(datafeed = datalist,clockdata= clock_data,
+                                                     params= {'window_prd':self.params.BasisMmt_window_prd})
                         
                 # 指标太多，就不画出来了
                 self.BasisMmt_ind[vt].plotinfo.plot = False
@@ -297,8 +300,5 @@ if __name__ == '__main__':
                                   kind3={'window_prd':stat.params.BasisMmt_window_prd})
         
 
-    # 由于多个品种，所以品种的收盘价数据就不画了
-    for data in cerebro.datas:
-        data.plotinfo.plot = False 
     
     cerebro.plot()  

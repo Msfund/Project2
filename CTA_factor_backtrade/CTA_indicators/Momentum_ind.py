@@ -1,5 +1,8 @@
 # encoding:utf-8
-# the file is to create the momentum indicator
+
+# 横截面动量因子
+# 参考海通证券《CTA因子化投资与组合构建》p13
+
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -13,6 +16,7 @@ from backtrader import num2date
 from CTA_factor_backtrade.Indicator_Base import Indicator_Fetch
 
 # import the packages we need
+
 import numpy as np 
 
 class Momentum_ind(bt.Indicator):

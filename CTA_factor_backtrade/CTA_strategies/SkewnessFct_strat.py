@@ -1,6 +1,7 @@
 # encoding: utf-8
-# the file used to test the single factor using the multiple vtsymbol
 
+# 偏度因子测试
+# 参考海通证券《CTA因子化投资与组合构建》p34-35
 
 
 from __future__ import (absolute_import, division, print_function,
@@ -16,7 +17,7 @@ from backtrader import num2date
 
 from CTA_factor_backtrade.CTA_base import CTA_setting_parse
 from CTA_factor_backtrade.position_manage.Tgtvol_pos import Tgtvol_Position_manag
-from CTA_factor_backtrade.CTA_indicators.Skewness_ind import Skn_ind
+from CTA_factor_backtrade.CTA_indicators.Skewness_ind import Skewness_ind
 from getdata_project.HdfUtility import HdfUtility
 # import setting
 from CTA_factor_backtrade.CTA_strategies.SkewnessFctlist_setting import SETTING
@@ -87,8 +88,8 @@ class Skn_Strategy(bt.Strategy):
             # 将同一品种的数据保存在datafeeds_vt里面
             # add the skewness indicator
             for i, vt in self.index_mapping_vt.items():        
-                self.skn_ind[vt] = Skn_ind(window_period = self.params.skn_window_prd,
-                                              datafeed= self.datas[i])                
+                self.skn_ind[vt] = Skewness_ind(params =  {'window_prd':self.params.skn_window_prd},
+                                              datafeed = [self.datas[i]], clockdata = self.datas[i])                
                 self.skn_ind[vt].plotinfo.plot = False
             # 加个计时器：clock,然后利用计时器来提取指标
             self.clock = 0
@@ -220,7 +221,7 @@ if __name__ == '__main__':
     cerebro.addstrategy(Skn_Strategy)  
     # parameter parse
     parse_tool = CTA_setting_parse(SETTING)
-    parse_tool.adds2platform(platform=cerebro)
+    parse_tool.add2platform(platform=cerebro)
     # loading data
     parse_tool.loading_data(platform=cerebro)
     # add some parmas from setting

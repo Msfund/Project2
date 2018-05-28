@@ -1,7 +1,8 @@
 # encoding: utf-8
-# backtesting roll over factor
 
-
+# 展期因子策略
+# 参考海通证券《CTA因子化投资与组合构建》p16
+# 这里的合约的组合为近月合约和远月合约
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -15,7 +16,7 @@ from backtrader import Order
 # import the strategy indicator, position management method and data engine
 from CTA_factor_backtrade.CTA_base import CTA_setting_parse
 from CTA_factor_backtrade.position_manage.Tgtvol_pos import Tgtvol_Position_manag
-from CTA_factor_backtrade.CTA_indicators.Rollover_ind import Rollover
+from CTA_factor_backtrade.CTA_indicators.Rollover_ind import Rollover_ind
 from getdata_project.HdfUtility import HdfUtility
 # import the setting of strategy
 from CTA_factor_backtrade.CTA_strategies.RolloverFctlist_setting import SETTING
@@ -100,7 +101,8 @@ class RolloverStrategy(bt.Strategy):
             # 但是我们不用其进行计算            
             for vt, datalist in datafeeds_vt.items():
                 clock_data = self.datas[self.tradevt_campping_index[vt]]
-                self.rollover_ind[vt] = Rollover(datafeed = datalist + [clock_data], window_prd= self.params.rollover_window_prd)
+                self.rollover_ind[vt] = Rollover_ind(datafeed = datalist, clockdata= clock_data,
+                                                     params = {'window_prd':self.params.rollover_window_prd})
                         
                 # 指标太多，就不画出来了
                 self.rollover_ind[vt].plotinfo.plot = False

@@ -1,5 +1,8 @@
 # encoding:utf-8
-# the file is to create the skewness indicator
+
+# 偏度因子
+# 参考海通证券《CTA因子化投资与组合构建》p34-35
+
 
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)

@@ -1,6 +1,7 @@
 # encoding: utf-8
-# the file used to creat the basis_momentum factor
 
+# 基差动量因子
+# 参考海通证券《CTA因子化投资与组合构建》p18
 import backtrader as bt
 from getdata_project.HisDayData import HisDayData
 

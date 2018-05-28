@@ -1,6 +1,8 @@
 # encoding: utf-8
-# the file used to creat the roll over factor
 
+# 展期因子策略
+# 参考海通证券《CTA因子化投资与组合构建》p16
+# 这里的合约的组合为近月合约和远月合约
 import backtrader as bt
 from CTA_factor_backtrade.Indicator_Base import Indicator_Fetch
 from backtrader import num2date
