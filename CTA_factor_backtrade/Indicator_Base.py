@@ -1,7 +1,6 @@
 # encoding: utf-8
 
-# 本文件用于各种指标的获取，储存以及展示
-
+# 本模块可用于因子的生成存储, 因子的可视化分析, 后验分析等
 
 # Import the backtrader platform
 import backtrader as bt
@@ -21,9 +20,11 @@ import copy
 from collections import defaultdict
 from backtrader import num2date
 
+
 #from matplotlib import pyplot as plt
 class Indicator_Fetch(bt.Strategy):
-    '''本类只适合需要单个品种的数据进行计算的因子
+    '''
+    本类只适合需要单个品种的数据进行计算的因子
     '''
     def __init__(self, params):        
         self.indicator_params = params
@@ -35,13 +36,15 @@ class Indicator_Fetch(bt.Strategy):
             # 因子来自我们自己定义的指标
             Mould = importlib.import_module(name= 'backtrader.indicators.'+ self.indicator_name)
             self.Indicator = getattr(Mould, self.indicator_name)
+            self._fself = True
         except :
             try:
-                # 因子来自系统自带的指标
-                Mould = importlib.import_module(name= 'CTA_factor_backtrade.CTA_indicators.'+ self.indicator_name)
-                self.Indicator = getattr(Mould, self.indicator_name)
+                # 因子来自talib
+                import backtrader.talib as tb
+                self.Indicator = getattr(tb, self.indicator_name)
+                self._fself = False
             # 抛出异常
-            except NameError:
+            except :
                 raise NameError(self.indicator_name)
             
             
@@ -54,13 +57,38 @@ class Indicator_Fetch(bt.Strategy):
         #self.tradevt_campping_index = {re.findall('^(\D*)',data._name)[0]: i for i, data in enumerate(self.datas) if data._name[-4:]=='0000'}
         #self.index_campping_tradevt = {i: re.findall('^(\D*)',data._name)[0] for i, data in enumerate(self.datas) if data._name[-4:]=='0000'}
        
-        # 生成信号指标
+        # 生成指标
         # 这里有空可以区分系统生成的因子和自己生成的因子的不同方式，因为不同因子参数不同
-        self.CTAIndicator_Create()
+        if self._fself:
+            self.CTAIndicator_Create()
+        
+        else:
+            self.Tbindicator_create()
+            
+            
+            
+    def Tbindicator_create(self):
+        # talib系统因子
+        
+        # 查看需要输入的数据
 
+        datasname = self.indicator_params['dataname']
+        # 删除不需要的键，重命名window_prd因为在talib里面都是这么命名的        
+        self.indicator_params.pop('dataname')
+        self.indicator_params['timeperiod'] = self.indicator_params.pop('window_prd')        
+        
+        for i, vt in self.index_mapping_symbol.items():
+            vt = re.findall('^(\D*)', vt)[0]
+            data = self.datas[i]
+            ind_data = [getattr(data, name.lower())*data.adjfactor for name in datasname]
+            
+            self.ind[vt] = self.Indicator(*ind_data, **self.indicator_params)
+    
+    
+    
     def CTAIndicator_Create(self):
 
-        
+    # 自己编写的因子
     # 如果数据是实时生成，那么调用相关指标进行计算
 
         # 将同一品种的数据保存在datafeeds_vt里面
@@ -104,20 +132,24 @@ class Indicator_Fetch(bt.Strategy):
     
         if SETTING['indsave']:
             # save the indicator
-            print('save the indicator')
-            Indicator_utl = HdfUtility()
-            stat = cerebro.runstrats[0][0]
-            indicator_byvt = stat.ind
-            params = SETTING['data_setting']
-            for vt, indicator in indicator_byvt.items():
-                indicator_data = indicator.array
-                tradingday = cerebro.datasbyname[vt+'0000'].datetime.array
-                df = pd.DataFrame({'Indicator':indicator_data, 'Date':tradingday})
-                date_parse = lambda x:num2date(x)
-                df['Date'] = df['Date'].apply(date_parse)
-                excode = params['excode'][params['vt'].index(vt)]        
-                Indicator_utl.hdfWrite(EXT_Hdf_Path, excode, vt, df.set_index('Date'), kind1='Indicator', kind2=stat.indicator_name, 
-                                       kind3={'window_prd':stat.params['window_prd']})           
+            print('save the indicator: %s'%indicator_name)
+            Indicator_Fetch.indicator_save(platform = cerebro, setting = SETTING)
+    
+    @classmethod
+    def indicator_save(cls, platform, setting):
+        Indicator_utl = HdfUtility()
+        stat = platform.runstrats[0][0]
+        indicator_byvt = stat.ind
+        params = setting['data_setting']
+        for vt, indicator in indicator_byvt.items():
+            indicator_data = indicator.array
+            tradingday = platform.datasbyname[vt+'0000'].datetime.array
+            df = pd.DataFrame({'Indicator':indicator_data, 'Date':tradingday})
+            date_parse = lambda x:num2date(x)
+            df['Date'] = df['Date'].apply(date_parse)
+            excode = params['excode'][params['vt'].index(vt)]        
+            Indicator_utl.hdfWrite(EXT_Hdf_Path, excode, vt, df.set_index('Date'), kind1='Indicator', kind2=stat.indicator_name, 
+                                   kind3={'window_prd':stat.ind_window_prd})        
   
     
     #@classmethod
